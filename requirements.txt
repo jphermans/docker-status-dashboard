@@ -1,0 +1,6 @@
+Flask
+psutil
+flask-httpauth
+python-dotenv
+gunicorn
+flask-login

@@ -1,0 +1,26 @@
+{
+    "name": "Docker Status Dashboard",
+    "short_name": "DockerDash",
+    "description": "Monitor je Docker containers",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#282828",
+    "theme_color": "#fe8019",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/static/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/static/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": ["utilities", "productivity"],
+    "lang": "nl-NL"
+}
