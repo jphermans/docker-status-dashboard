@@ -31,7 +31,8 @@ A secure, feature-rich web dashboard for monitoring and managing Docker containe
 
 ### 👤 User Management
 - **Password Change** - Secure password updates with strength indicator
-- **Persistent Storage** - Passwords and 2FA settings persist across container rebuilds
+- **Persistent Storage** - Passwords and 2FA settings persist across container rebuilds via volume mount
+- **Automatic Fallback** - Login checks stored password first, falls back to environment variable
 
 ## 🚀 Quick Start
 
@@ -52,12 +53,17 @@ cp .env.example .env
 
 Edit `.env` with your credentials:
 ```env
-SECRET_KEY=your-super-secret-key-at-least-32-characters-long
+SECRET_KEY=your-secure-random-key-here
 AUTH_USERNAME=admin
 AUTH_PASSWORD=your-secure-password
 ```
 
-### 3. Build and Run
+### 3. Create Data Directory (for persistence)
+```bash
+mkdir -p data
+```
+
+### 4. Build and Run
 ```bash
 # Build the Docker image
 docker build -t docker-status-dashboard:latest .
@@ -69,14 +75,42 @@ docker run -d \
   -p 5000:5000 \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v $(pwd)/data:/app/data \
-  -e SECRET_KEY="$(grep SECRET_KEY .env | cut -d'=' -f2)" \
-  -e AUTH_USERNAME="$(grep AUTH_USERNAME .env | cut -d'=' -f2)" \
-  -e AUTH_PASSWORD="$(grep AUTH_PASSWORD .env | cut -d'=' -f2)" \
+  -e SECRET_KEY=$(grep SECRET_KEY .env | cut -d'=' -f2) \
+  -e AUTH_USERNAME=$(grep AUTH_USERNAME .env | cut -d'=' -f2) \
+  -e AUTH_PASSWORD=$(grep AUTH_PASSWORD .env | cut -d'=' -f2) \
   docker-status-dashboard:latest
 ```
 
-### 4. Access the Dashboard
-Open your browser and navigate to: `http://localhost:5000`
+### 5. Access the Dashboard
+Open your browser and navigate to: `http://your-server-ip:5000`
+
+## 📁 Project Structure
+
+```
+docker-status-dashboard/
+├── app.py                 # Main Flask application
+├── requirements.txt       # Python dependencies
+├── Dockerfile            # Docker build configuration
+├── .gitignore            # Git exclusions
+├── .dockerignore         # Docker build exclusions
+├── .env.example          # Environment template
+├── README.md             # This file
+├── data/                 # Persistent data (volume mount)
+│   ├── 2fa_config.json   # 2FA settings (auto-generated)
+│   └── password.json     # Changed passwords (auto-generated)
+├── templates/            # HTML templates
+│   ├── index.html        # Dashboard
+│   ├── login.html        # Login page
+│   ├── verify_2fa.html   # 2FA verification
+│   ├── 2fa_setup.html    # 2FA setup wizard
+│   ├── 2fa_status.html   # 2FA status
+│   └── change_password.html  # Password change
+└── static/               # Static assets
+    ├── icon-192.png
+    ├── icon-512.png
+    ├── sw.js
+    └── manifest.json
+```
 
 ## 🔧 Configuration
 
@@ -84,18 +118,20 @@ Open your browser and navigate to: `http://localhost:5000`
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `SECRET_KEY` | Yes | Flask secret key for session encryption (min 32 chars) |
+| `SECRET_KEY` | Yes | Flask secret key for session encryption |
 | `AUTH_USERNAME` | Yes | Dashboard login username |
-| `AUTH_PASSWORD` | Yes | Dashboard login password (min 8 chars recommended) |
+| `AUTH_PASSWORD` | Yes | Initial dashboard login password |
 
 ### Persistent Data
-The `data` directory stores:
-- `2fa_config.json` - TOTP secrets and backup codes
-- `password.json` - Updated password (after password change)
+
+The `data/` directory stores:
+- **2FA Configuration** (`2fa_config.json`) - TOTP secrets and backup codes
+- **Changed Passwords** (`password.json`) - Updated passwords
+
+> ⚠️ **Important**: Mount the `data/` directory to persist settings across container rebuilds!
 
 ## 📱 2FA Setup
 
-### Enable 2FA
 1. Login to the dashboard
 2. Click **🔐 2FA** in the navigation bar
 3. Scan the QR code with your authenticator app:
@@ -105,78 +141,58 @@ The `data` directory stores:
    - 1Password
    - LastPass Authenticator
 4. Enter the 6-digit code to verify
-5. **Save your backup codes!**
+5. **Save your backup codes!** Store them securely (password manager, printed copy)
 
-### After 2FA Setup
-- Login requires password + 2FA code
-- Codes refresh every 30 seconds
-- Use backup codes if you lose access to your authenticator
+### 2FA Reset
+If you lose access to your authenticator and backup codes:
+1. Delete `data/2fa_config.json` on the server
+2. Restart the container
+3. Login without 2FA and set it up again
+
+## 🔑 Password Management
+
+### Change Password
+1. Login to the dashboard
+2. Click **🔑 Password** in the navigation bar
+3. Enter your current password
+4. Enter and confirm your new password (min. 8 characters)
+5. The new password is stored in `data/password.json`
+
+### How It Works
+- Login checks `data/password.json` first
+- Falls back to `AUTH_PASSWORD` environment variable if no stored password
+- Changes persist across container rebuilds when volume is mounted
 
 ## 🛡️ Security Best Practices
 
-### For Production
-1. **Enable HTTPS** - Use a reverse proxy (nginx, Traefik) with SSL/TLS
-2. **Change `SESSION_COOKIE_SECURE`** to `True` in `app.py` when using HTTPS
-3. **Use strong secrets** - Generate a cryptographically secure `SECRET_KEY`
-4. **Regular updates** - Keep dependencies updated
-5. **Network security** - Consider firewall rules or VPN access
+### Production Deployment
 
-### Generate Secure Secret Key
-```python
-import secrets
-print(secrets.token_hex(32))
-```
+1. **Use HTTPS** - Place behind a reverse proxy (nginx, Traefik) with SSL
+2. **Change default password** - Update password immediately after first login
+3. **Enable 2FA** - Always enable two-factor authentication
+4. **Restrict access** - Use firewall rules to limit access
+5. **Regular updates** - Keep the container and dependencies updated
+6. **Backup data/** - Regularly backup the `data/` directory
 
-## 📁 Project Structure
-
-```
-docker-status-dashboard/
-├── app.py                 # Main Flask application
-├── requirements.txt       # Python dependencies
-├── Dockerfile             # Docker build configuration
-├── .gitignore            # Git exclusions
-├── .dockerignore         # Docker build exclusions
-├── .env.example          # Environment template
-├── README.md             # This file
-├── templates/
-│   ├── index.html        # Main dashboard
-│   ├── login.html        # Login page
-│   ├── verify_2fa.html   # 2FA verification
-│   ├── 2fa_setup.html    # 2FA setup wizard
-│   ├── 2fa_status.html   # 2FA status page
-│   └── change_password.html  # Password change form
-├── static/
-│   ├── icon-192.png      # PWA icon
-│   ├── icon-512.png      # PWA icon
-│   ├── sw.js             # Service worker
-│   └── manifest.json     # PWA manifest
-└── data/                  # Persistent data (mounted volume)
-    ├── 2fa_config.json   # 2FA settings
-    └── password.json     # Updated password
-```
-
-## 🔧 Dependencies
-
-- **Flask** - Web framework
-- **Flask-Login** - User session management
-- **Flask-Limiter** - Rate limiting
-- **Flask-WTF** - CSRF protection
-- **pyotp** - TOTP 2FA implementation
-- **qrcode** - QR code generation
-- **psutil** - System statistics
-- **gunicorn** - WSGI HTTP Server
+### Security Headers
+The application sets these security headers:
+- `X-Frame-Options: DENY`
+- `X-Content-Type-Options: nosniff`
+- `X-XSS-Protection: 1; mode=block`
+- `Content-Security-Policy: default-src 'self'`
+- `Referrer-Policy: strict-origin-when-cross-origin`
 
 ## 📋 API Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/` | GET | Main dashboard (requires auth) |
+| `/` | GET | Dashboard (requires auth) |
 | `/login` | GET/POST | Login page |
-| `/logout` | GET | Logout user |
-| `/verify-2fa` | GET/POST | 2FA verification |
-| `/2fa-setup` | GET/POST | Setup 2FA |
-| `/2fa-status` | GET | View 2FA status |
+| `/logout` | GET | Logout |
 | `/change-password` | GET/POST | Change password |
+| `/2fa-setup` | GET/POST | 2FA setup wizard |
+| `/2fa-status` | GET | 2FA status and management |
+| `/verify-2fa` | GET/POST | 2FA verification |
 | `/api/stats` | GET | System statistics |
 | `/api/containers` | GET | List all containers |
 | `/api/container/<name>/start` | POST | Start container |
@@ -184,6 +200,7 @@ docker-status-dashboard/
 | `/api/container/<name>/restart` | POST | Restart container |
 | `/api/container/<name>/logs` | GET | Get container logs |
 | `/api/images` | GET | List Docker images |
+| `/api/prune/images` | POST | Prune unused images |
 
 ## 🤝 Contributing
 
@@ -193,16 +210,13 @@ docker-status-dashboard/
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📄 License
+## 📝 License
 
 This project is open source and available under the [MIT License](LICENSE).
 
 ## 🙏 Acknowledgments
 
-- Flask framework and extensions
+- Flask framework
 - Docker SDK
-- pyotp for TOTP implementation
-
----
-
-**Made with ❤️ by [jphermans](https://github.com/jphermans)**
+- pyotp for TOTP authentication
+- qrcode for QR code generation

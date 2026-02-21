@@ -178,7 +178,7 @@ def login():
         password = request.form.get('password', '')
 
         valid_username = os.getenv('AUTH_USERNAME')
-        valid_password = os.getenv('AUTH_PASSWORD')
+        valid_password = get_stored_password()
 
         if username == valid_username and password == valid_password:
             if is_2fa_enabled(username):
@@ -514,20 +514,36 @@ if __name__ == '__main__':
 @app.route('/change-password', methods=['GET', 'POST'])
 @login_required
 def change_password():
-    """Change user password"""
+    """Change user password - stores in data directory for persistence"""
     username = current_user.id
+    PASSWORD_FILE = os.path.join(os.path.dirname(__file__), 'data', 'password.json')
+    
+    def get_stored_password():
+        """Get stored password from file or environment"""
+        if os.path.exists(PASSWORD_FILE):
+            try:
+                with open(PASSWORD_FILE, 'r') as f:
+                    data = json.load(f)
+                    return data.get('password', os.getenv('AUTH_PASSWORD'))
+            except:
+                return os.getenv('AUTH_PASSWORD')
+        return os.getenv('AUTH_PASSWORD')
+    
+    def save_password(password):
+        """Save new password to file"""
+        os.makedirs(os.path.dirname(PASSWORD_FILE), exist_ok=True)
+        with open(PASSWORD_FILE, 'w') as f:
+            json.dump({'password': password, 'updated': datetime.now().isoformat()}, f)
     
     if request.method == 'POST':
         current_pwd = request.form.get('current_password', '')
         new_pwd = request.form.get('new_password', '')
         confirm_pwd = request.form.get('confirm_password', '')
         
-        # Validate current password
-        if current_pwd != os.getenv('AUTH_PASSWORD'):
+        if current_pwd != get_stored_password():
             flash('Huidig wachtwoord is onjuist', 'danger')
             return redirect(url_for('change_password'))
         
-        # Validate new password
         if len(new_pwd) < 8:
             flash('Nieuw wachtwoord moet minimaal 8 tekens zijn', 'danger')
             return redirect(url_for('change_password'))
@@ -536,18 +552,7 @@ def change_password():
             flash('Nieuwe wachtwoorden komen niet overeen', 'danger')
             return redirect(url_for('change_password'))
         
-        # Update password in .env file
-        env_file = os.path.join(os.path.dirname(__file__), '.env')
-        with open(env_file, 'r') as f:
-            lines = f.readlines()
-        
-        with open(env_file, 'w') as f:
-            for line in lines:
-                if line.startswith('AUTH_PASSWORD='):
-                    f.write(f'AUTH_PASSWORD={new_pwd}\n')
-                else:
-                    f.write(line)
-        
+        save_password(new_pwd)
         logger.info(f"Password changed for user: {username}")
         flash('Wachtwoord succesvol gewijzigd!', 'success')
         return redirect(url_for('index'))
