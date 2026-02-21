@@ -170,6 +170,11 @@ def ratelimit_handler(e):
     logger.warning(f"Rate limit exceeded from IP: {get_remote_address()}")
     return render_template('login.html', error='Te veel pogingen. Wacht 1 minuut en probeer opnieuw.'), 429
 
+# Health check endpoint (no auth required for Docker healthcheck)
+@app.route('/health')
+def health_check():
+    return jsonify({'status': 'healthy', 'timestamp': datetime.now().isoformat()}), 200
+
 # Static routes
 @app.route('/static/<path:filename>')
 def serve_static(filename):
