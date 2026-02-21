@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2FA Setup - Docker Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); min-height: 100vh; padding: 40px 20px; }
+        .setup-card { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 40px; max-width: 600px; margin: 0 auto; }
+        h2, h4 { color: #fff; }
+        p, li { color: rgba(255,255,255,0.8); }
+        .qr-container { background: #fff; padding: 20px; border-radius: 15px; display: inline-block; margin: 20px 0; }
+        .qr-container img { width: 200px; height: 200px; }
+        .secret-code { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; font-family: monospace; font-size: 1.2rem; color: #ffc107; word-break: break-all; margin: 15px 0; }
+        .form-control { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: #fff; }
+        .form-control:focus { background: rgba(255,255,255,0.2); border-color: #0d6efd; color: #fff; }
+        .btn-primary { background: linear-gradient(45deg, #0d6efd, #0dcaf7); border: none; padding: 12px 30px; }
+        .btn-success { background: linear-gradient(45deg, #198754, #20c997); border: none; }
+        .backup-codes { background: rgba(255,193,7,0.1); border: 1px solid #ffc107; border-radius: 10px; padding: 20px; margin: 20px 0; }
+        .backup-code { font-family: monospace; font-size: 1.1rem; color: #ffc107; display: inline-block; margin: 5px; }
+        .step-indicator { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; }
+        .step { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.2); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .step.active { background: linear-gradient(45deg, #0d6efd, #0dcaf7); }
+        .step.completed { background: #198754; }
+        .alert { border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div class="setup-card">
+        <h2 style="text-align: center; margin-bottom: 30px;">🔐 Tweefactorauthenticatie Setup</h2>
+        
+        {% if step == 'start' %}
+        <!-- Step 1: Introduction -->
+        <div class="step-indicator">
+            <div class="step active">1</div>
+            <div class="step">2</div>
+            <div class="step">3</div>
+        </div>
+        
+        <h4>Wat is 2FA?</h4>
+        <p>Tweefactorauthenticatie voegt een extra beveiligingslaag toe aan je account. Naast je wachtwoord heb je een code nodig die elke 30 seconden verandert.</p>
+        
+        <h4 style="margin-top: 25px;">Hoe werkt het?</h4>
+        <ol>
+            <li>Installeer een authenticator app (Google Authenticator, Authy, of Microsoft Authenticator)</li>
+            <li>Scan de QR code met de app</li>
+            <li>Voer de code in om te verifiëren</li>
+        </ol>
+        
+        <form method="POST" style="margin-top: 30px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="generate">
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-lg">Start Setup →</button>
+            </div>
+        </form>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="/" style="color: rgba(255,255,255,0.5);">← Terug naar dashboard</a>
+        </div>
+        
+        {% elif step == 'verify' %}
+        <!-- Step 2: Scan QR and verify -->
+        <div class="step-indicator">
+            <div class="step completed">1</div>
+            <div class="step active">2</div>
+            <div class="step">3</div>
+        </div>
+        
+        <h4 style="text-align: center;">Scan met je Authenticator App</h4>
+        
+        <div style="text-align: center;">
+            {% if qr_code %}
+            <div class="qr-container">
+                <img src="data:image/png;base64,{{ qr_code }}" alt="2FA QR Code">
+            </div>
+            {% else %}
+            <p style="color: #ffc107;">Scan deze QR code of voer de code handmatig in:</p>
+            {% endif %}
+            
+            <div class="secret-code">{{ secret }}</div>
+            <p style="font-size: 0.85rem; color: rgba(255,255,255,0.6);">Kopieer deze code als je geen QR code kunt scannen</p>
+        </div>
+        
+        {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+        
+        <h4 style="margin-top: 25px;">Voer de 6-cijferige code in</h4>
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="verify">
+            <div class="input-group mb-3">
+                <input type="text" name="verify_code" class="form-control text-center" 
+                       maxlength="6" pattern="[0-9]{6}" placeholder="000000" required>
+                <button type="submit" class="btn btn-success">Verifiëren</button>
+            </div>
+        </form>
+        
+        {% elif step == 'complete' %}
+        <!-- Step 3: Success with backup codes -->
+        <div class="step-indicator">
+            <div class="step completed">1</div>
+            <div class="step completed">2</div>
+            <div class="step completed">3</div>
+        </div>
+        
+        <div style="text-align: center;">
+            <div style="font-size: 4rem; margin-bottom: 20px;">✅</div>
+            <h2>2FA Succesvol Ingeschakeld!</h2>
+            <p style="margin-top: 15px;">Je account is nu beschermd met tweefactorauthenticatie.</p>
+        </div>
+        
+        <div class="backup-codes">
+            <h4 style="color: #ffc107; margin-bottom: 15px;">🔑 Backup Codes</h4>
+            <p style="font-size: 0.9rem; margin-bottom: 15px;">Bewaar deze codes veilig! Je kunt ze gebruiken als je geen toegang hebt tot je authenticator app.</p>
+            <div style="text-align: center;">
+                {% for code in backup_codes %}
+                <span class="backup-code">{{ code }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="alert alert-warning">
+            <strong>⚠️ Belangrijk:</strong> Schrijf deze codes op of sla ze veilig op. Ze worden maar één keer getoond!
+        </div>
+        
+        <div class="d-grid" style="margin-top: 20px;">
+            <a href="/" class="btn btn-primary btn-lg">→ Naar Dashboard</a>
+        </div>
+        
+        {% endif %}
+    </div>
+</body>
+</html>

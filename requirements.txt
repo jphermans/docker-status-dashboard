@@ -4,3 +4,9 @@ flask-httpauth
 python-dotenv
 gunicorn
 flask-login
+flask-limiter
+flask-wtf
+email-validator
+pyotp
+qrcode
+pillow

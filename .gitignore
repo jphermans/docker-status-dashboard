@@ -1,26 +1,65 @@
+# Environment files (contains secrets!)
+.env
+.env.local
+.env.*.local
+secrets.env
+*.env
+
+# 2FA Configuration (contains secrets!)
+2fa_config.json
+
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
 venv/
+ENV/
 env/
 .venv/
-
-# Environment
-.env
-*.env
 
 # IDE
 .idea/
 .vscode/
 *.swp
 *.swo
-
-# OS
+*~
 .DS_Store
-Thumbs.db
+
+# Logs
+*.log
+logs/
 
 # Docker
-*.log
+*.pid
+*.seed
+*.pid.lock
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/

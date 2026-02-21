@@ -1,0 +1,61 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# Environment files
+.env
+.env.*
+*.env
+secrets.env
+
+# 2FA config (runtime data)
+2fa_config.json
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing
+.coverage
+.pytest_cache/
+tests/
+
+# Docker files (don't copy into image)
+Dockerfile
+Dockerfile.*
+docker-compose*.yml
+.docker
+.dockerignore
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+
+# Misc
+.DS_Store
+*.log
+*.tmp
+*.temp
+LICENSE

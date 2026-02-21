@@ -2,11 +2,10 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="description" content="Docker Status Dashboard - Monitor je containers">
-    <meta name="theme-color" content="#fe8019">
+    <meta name="theme-color" content="#2563eb">
     
-    <!-- PWA Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="DockerDash">
@@ -17,57 +16,80 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root {
-            --bg-main: #282828;
-            --bg-card: #3c3836;
-            --bg-header: #504945;
-            --text-main: #ebdbb2;
-            --text-muted: #a89984;
-            --accent: #fe8019;
-            --status-running: #b8bb26;
-            --status-stopped: #fb4934;
-            --table-row-bg: #3c3836;
-            --table-row-hover: #504945;
+            --bg-body: #f0f4f8;
+            --bg-card: #ffffff;
+            --bg-header: #2563eb;
+            --bg-input: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --text-bright: #0f172a;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --accent-light: #3b82f6;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #f59e0b;
+            --border: #cbd5e1;
+            --table-row-bg: #ffffff;
+            --table-row-hover: #eff6ff;
+            --shadow: rgba(37, 99, 235, 0.1);
         }
-        
-        [data-theme="light"] {
-            --bg-main: #fbf1c7;
-            --bg-card: #f2e5bc;
-            --bg-header: #d5c4a1;
-            --text-main: #3c3836;
-            --text-muted: #665c54;
-            --accent: #d65d0e;
-            --status-running: #79740e;
-            --status-stopped: #9d0006;
-            --table-row-bg: #f2e5bc;
-            --table-row-hover: #d5c4a1;
+
+        [data-theme="dark"] {
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --bg-header: #1d4ed8;
+            --bg-input: #334155;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --text-bright: #ffffff;
+            --accent: #3b82f6;
+            --accent-hover: #60a5fa;
+            --accent-light: #2563eb;
+            --success: #22c55e;
+            --danger: #f87171;
+            --warning: #fbbf24;
+            --border: #475569;
+            --table-row-bg: #1e293b;
+            --table-row-hover: #334155;
+            --shadow: rgba(59, 130, 246, 0.15);
         }
         
         * { box-sizing: border-box; }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--bg-main);
+            background-color: var(--bg-body);
             color: var(--text-main);
             margin: 0;
             min-height: 100vh;
+            padding-bottom: 50px;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
         
         .navbar {
             background-color: var(--bg-card);
             border-bottom: 2px solid var(--accent);
-            padding: 0.75rem 1rem;
+            padding: 0.5rem 0.75rem;
         }
         
-        .navbar-brand { color: var(--accent) !important; font-weight: bold; }
+        .navbar-brand { 
+            color: var(--accent) !important; 
+            font-weight: bold;
+            font-size: 1rem;
+        }
         
         .nav-tabs {
-            border-bottom: 1px solid var(--bg-header);
+            border-bottom: 1px solid var(--border);
+            flex-wrap: nowrap;
         }
         
         .nav-tabs .nav-link {
             color: var(--text-muted);
             border: none;
-            padding: 0.75rem 1.5rem;
+            padding: 0.6rem 1rem;
+            white-space: nowrap;
+            font-size: 0.9rem;
         }
         
         .nav-tabs .nav-link.active {
@@ -80,36 +102,190 @@
             color: var(--text-main);
         }
         
-        .container-fluid { padding: 1rem; }
+        .container-fluid { 
+            padding: 0.75rem; 
+        }
         
         .card {
             background-color: var(--bg-card);
-            border: none;
-            border-radius: 8px;
-            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 2px 8px var(--shadow);
+            transition: all 0.3s ease;
         }
         
         .card-header {
             background-color: var(--bg-header);
-            color: var(--text-main);
+            color: #ffffff;
             font-weight: bold;
-            border-radius: 8px 8px 0 0 !important;
+            border-radius: 12px 12px 0 0 !important;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        @media (min-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
         }
         
         .stat-card {
             text-align: center;
-            padding: 1rem;
+            padding: 1rem 0.5rem;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px var(--shadow);
+            transition: transform 0.2s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
         }
         
         .stat-value {
-            font-size: 2rem;
+            font-size: 1.5rem;
             font-weight: bold;
             color: var(--accent);
+            margin-bottom: 0.25rem;
         }
         
         .stat-label {
             color: var(--text-muted);
-            font-size: 0.9rem;
+            font-size: 0.8rem;
+        }
+        
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.75rem;
+            align-items: center;
+        }
+        
+        .toolbar .form-control {
+            flex: 1;
+            min-width: 150px;
+            max-width: 250px;
+        }
+        
+        .btn {
+            font-size: 0.85rem;
+            padding: 0.4rem 0.75rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--accent);
+            border-color: var(--accent);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+            border-color: var(--accent-hover);
+        }
+        
+        .btn-success { background-color: var(--success); border-color: var(--success); }
+        .btn-danger { background-color: var(--danger); border-color: var(--danger); }
+        .btn-warning { background-color: var(--warning); border-color: var(--warning); color: #000; }
+        
+        /* Container list */
+        .container-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .container-item {
+            background-color: var(--table-row-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.75rem;
+            transition: all 0.2s ease;
+        }
+        
+        .container-item:hover {
+            background-color: var(--table-row-hover);
+            border-color: var(--accent);
+        }
+        
+        .container-item .row-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .container-item .name {
+            font-weight: 600;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+        
+        .container-item .status-icon {
+            font-size: 1rem;
+        }
+        
+        .container-item .row-middle {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+            font-size: 0.8rem;
+        }
+        
+        .container-item .row-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .container-item .image {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+        
+        .container-item .stats {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+        
+        .container-item .actions {
+            display: flex;
+            gap: 0.25rem;
+        }
+        
+        .container-item .actions .btn {
+            padding: 0.2rem 0.5rem;
+            font-size: 0.75rem;
+        }
+        
+        .status-running { color: var(--success); }
+        .status-stopped { color: var(--danger); }
+        
+        /* Desktop table */
+        @media (min-width: 768px) {
+            .container-list { display: none; }
+            .container-table { display: table; }
+        }
+        
+        @media (max-width: 767px) {
+            .container-list { display: flex; }
+            .container-table { display: none; }
         }
         
         .table {
@@ -117,201 +293,416 @@
             margin-bottom: 0;
         }
         
-        .table thead th {
-            background-color: var(--bg-header);
-            color: var(--text-main);
-            border: none;
-            padding: 0.75rem;
+        .table td, .table th {
+            padding: 0.75rem 0.5rem;
+            vertical-align: middle;
         }
         
         .table tbody tr {
-            background-color: var(--table-row-bg);
             cursor: pointer;
+            transition: background-color 0.2s ease;
         }
         
         .table tbody tr:hover {
             background-color: var(--table-row-hover);
         }
         
-        .table td {
-            border: none;
-            padding: 0.75rem;
-            vertical-align: middle;
+        .table .actions-col { width: 120px; }
+        .table .actions-col .btn {
+            padding: 0.2rem 0.4rem;
+            font-size: 0.7rem;
+            margin-right: 0.2rem;
         }
         
-        .status-running { color: var(--status-running); }
-        .status-stopped { color: var(--status-stopped); }
-        
-        .btn-logout {
-            background-color: transparent;
-            border: 1px solid var(--accent);
-            color: var(--accent);
-            padding: 0.4rem 1rem;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-decoration: none;
-        }
-        
-        .btn-logout:hover {
-            background-color: var(--accent);
-            color: var(--bg-main);
-        }
-        
-        .theme-toggle {
-            background: transparent;
-            border: none;
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 0.4rem;
-        }
-        
+        /* Logs */
         .logs-container {
-            background-color: #1d2021;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border);
             border-radius: 8px;
-            padding: 1rem;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: 0.85rem;
-            height: 500px;
-            overflow-y: auto;
+            padding: 0.75rem;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.8rem;
             white-space: pre-wrap;
             word-break: break-all;
-            color: #ebdbb2;
+            height: 350px;
+            overflow-y: auto;
+            color: var(--text-main);
         }
         
-        .container-selector {
+        @media (min-width: 768px) {
+            .logs-container { height: 500px; }
+        }
+        
+        .logs-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            align-items: center;
+        }
+        
+        .logs-toolbar .form-control, .logs-toolbar .form-select {
+            min-width: 0;
+        }
+        
+        .logs-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        
+        .form-control, .form-select {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+        }
+        
+        .form-select option {
             background-color: var(--bg-card);
-            border: 1px solid var(--bg-header);
             color: var(--text-main);
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            margin-right: 0.5rem;
         }
         
-        .btn-logs {
+        /* Modal */
+        .modal-content {
+            background-color: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+        
+        .modal-header {
             background-color: var(--accent);
-            border: none;
-            color: var(--bg-main);
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            cursor: pointer;
+            color: #fff;
+            border-bottom: none;
         }
         
-        .btn-logs:hover {
-            opacity: 0.9;
+        .modal-header .btn-close {
+            filter: invert(1);
         }
         
-        .auto-scroll-toggle {
-            margin-left: 1rem;
-            color: var(--text-main);
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        
+        @media (max-width: 576px) {
+            .detail-grid { grid-template-columns: 1fr; }
+        }
+        
+        .detail-item label {
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+        
+        .detail-item span {
+            font-size: 0.9rem;
+        }
+        
+        .detail-list {
+            background-color: var(--bg-input);
+            border-radius: 6px;
+            padding: 0.5rem;
+            font-family: monospace;
+            font-size: 0.8rem;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        /* Toggle switches */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .toggle-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        
+        /* Images list */
+        .image-item {
+            background-color: var(--table-row-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .image-item .image-name {
+            font-weight: 500;
+            font-size: 0.85rem;
+        }
+        
+        .image-item .image-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        
+        /* Notification badge */
+        .notification-badge {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--accent);
+            color: #fff;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 9999;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        /* Loading spinner */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 500;
+            z-index: 9999;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .toast.success { background-color: var(--success); }
+        .toast.error { background-color: var(--danger); }
+        .toast.warning { background-color: var(--warning); color: #000; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
         
         .last-update {
+            font-size: 0.75rem;
             color: var(--text-muted);
-            font-size: 0.8rem;
         }
         
-        @media (max-width: 768px) {
-            .stat-value { font-size: 1.5rem; }
-            .container-fluid { padding: 0.5rem; }
-            .logs-container { height: 400px; }
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+    
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            padding: 0.75rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            background-color: var(--bg-card);
+            border-top: 1px solid var(--border);
+            z-index: 100;
+        }
+
+        body {
+            padding-bottom: 50px;
         }
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="d-flex justify-content-between align-items-center w-100">
-            <span class="navbar-brand">🐳 Docker Status Dashboard</span>
-            <div class="d-flex align-items-center gap-2">
-                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">🌙</button>
-                <a href="/logout" class="btn-logout">Logout</a>
-            </div>
+    <nav class="navbar navbar-expand">
+        <a class="navbar-brand" href="#">🐳 Docker Dashboard</a>
+        <div class="ms-auto d-flex align-items-center gap-2">
+            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+            <a href="/2fa-setup" class="btn btn-outline-success btn-sm me-2">🔐 2FA</a>
+            <a href="/change-password" class="btn btn-outline-warning btn-sm me-2">🔑 Wachtwoord</a>
+            <a href="/logout" class="btn btn-outline-danger btn-sm">Logout</a>
         </div>
     </nav>
     
-    <ul class="nav nav-tabs" id="mainTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button">📊 Dashboard</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="logs-tab" data-bs-toggle="tab" data-bs-target="#logs" type="button">📝 Logs</button>
-        </li>
-    </ul>
-    
-    <div class="tab-content" id="mainTabContent">
-        <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
-            <div class="container-fluid">
-                <div class="row">
-                    <div class="col-6 col-md-3">
-                        <div class="card stat-card">
-                            <div class="stat-value" id="cpu-stat">--</div>
-                            <div class="stat-label">💻 CPU</div>
+    <div class="container-fluid">
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="cpu-stat">--</div>
+                <div class="stat-label">CPU</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="ram-stat">--</div>
+                <div class="stat-label">RAM</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="disk-stat">--</div>
+                <div class="stat-label">Disk</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="uptime-stat">--</div>
+                <div class="stat-label">Uptime</div>
+            </div>
+        </div>
+        
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-3">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#containers" id="containers-tab">📦 Containers</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#logs" id="logs-tab">📝 Logs</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#images" id="images-tab">🖼️ Images</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#system" id="system-tab">💻 System</a>
+            </li>
+        </ul>
+        
+        <div class="tab-content">
+            <!-- Containers Tab -->
+            <div class="tab-pane fade show active" id="containers">
+                <div class="card">
+                    <div class="card-header">
+                        <span>Containers</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="last-update" id="last-update">--</span>
+                            <button class="btn btn-light btn-sm" onclick="loadContainers()" title="Refresh">🔄</button>
                         </div>
                     </div>
-                    <div class="col-6 col-md-3">
-                        <div class="card stat-card">
-                            <div class="stat-value" id="ram-stat">--</div>
-                            <div class="stat-label">🧠 RAM</div>
+                    <div class="card-body">
+                        <div class="toolbar">
+                            <input type="text" class="form-control" id="search-input" placeholder="🔍 Zoek container..." oninput="filterContainers()">
+                            <div class="toggle-container">
+                                <input type="checkbox" id="auto-refresh" checked onchange="toggleAutoRefresh()">
+                                <span class="toggle-label">Auto-refresh</span>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="card stat-card">
-                            <div class="stat-value" id="disk-stat">--</div>
-                            <div class="stat-label">💾 Disk</div>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="card stat-card">
-                            <div class="stat-value" id="uptime-stat" style="font-size: 1rem;">--</div>
-                            <div class="stat-label">⏱️ Uptime</div>
-                        </div>
+                        
+                        <!-- Mobile List -->
+                        <div class="container-list" id="containers-list"></div>
+                        
+                        <!-- Desktop Table -->
+                        <table class="table container-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:50px">Status</th>
+                                    <th>Name</th>
+                                    <th>Image</th>
+                                    <th>CPU</th>
+                                    <th>MEM</th>
+                                    <th>NET</th>
+                                    <th class="actions-col">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="containers-table"></tbody>
+                        </table>
                     </div>
                 </div>
-                
+            </div>
+            
+            <!-- Logs Tab -->
+            <div class="tab-pane fade" id="logs">
+                <div class="card">
+                    <div class="card-header">📝 Container Logs</div>
+                    <div class="card-body">
+                        <div class="logs-toolbar">
+                            <select class="form-select" id="container-select" style="flex:1">
+                                <option value="">Selecteer container...</option>
+                            </select>
+                            <input type="number" class="form-control" id="log-lines" value="200" min="10" max="5000" style="width:100px" title="Aantal regels">
+                            <input type="text" class="form-control" id="log-search" placeholder="🔍 Zoek in logs..." style="width:150px">
+                            <button class="btn btn-primary" onclick="loadLogs()">Load</button>
+                            <button class="btn btn-secondary" onclick="exportLogs()" title="Export logs">📥</button>
+                        </div>
+                        <div class="logs-info">
+                            <span id="log-timestamp">--</span>
+                            <div class="toggle-container">
+                                <input type="checkbox" id="auto-scroll" checked>
+                                <span class="toggle-label">Auto-scroll</span>
+                            </div>
+                        </div>
+                        <div class="logs-container" id="logs-output">Selecteer een container en klik op "Load"</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Images Tab -->
+            <div class="tab-pane fade" id="images">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <span>📦 Containers</span>
-                        <span class="last-update" id="last-update">Last update: --</span>
+                        <span>🖼️ Docker Images</span>
+                        <button class="btn btn-warning btn-sm" onclick="pruneImages()" title="Remove unused images">🗑️ Prune</button>
                     </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Status</th>
-                                        <th>Naam</th>
-                                        <th>Image</th>
-                                        <th>CPU</th>
-                                        <th>Memory</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="containers-table">
-                                    <tr><td colspan="5" class="text-center">Laden...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="card-body" id="images-list"></div>
+                </div>
+            </div>
+            
+            <!-- System Tab -->
+            <div class="tab-pane fade" id="system">
+                <div class="card">
+                    <div class="card-header">💻 Docker System Info</div>
+                    <div class="card-body">
+                        <pre id="system-info" style="background:var(--bg-input);padding:1rem;border-radius:8px;overflow-x:auto;max-height:400px;color:var(--text-main)">Laden...</pre>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <div class="tab-pane fade" id="logs" role="tabpanel">
-            <div class="container-fluid">
-                <div class="card">
-                    <div class="card-header">📝 Container Logs</div>
-                    <div class="card-body">
-                        <div class="d-flex align-items-center mb-3">
-                            <select class="container-selector" id="container-select">
-                                <option value="">Selecteer container...</option>
-                            </select>
-                            <button class="btn-logs" onclick="loadLogs()">📝 Laad Logs</button>
-                            <label class="auto-scroll-toggle">
-                                <input type="checkbox" id="auto-scroll" checked>
-                                Auto-scroll
-                            </label>
-                        </div>
-                        <div class="logs-container" id="logs-output">Selecteer een container en klik op "Laad Logs"</div>
-                    </div>
+    </div>
+    
+    <!-- Detail Modal -->
+    <div class="modal fade" id="detailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-title">Container Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modal-body">
+                    <div class="spinner mx-auto"></div>
                 </div>
             </div>
         </div>
@@ -319,37 +710,64 @@
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        let autoRefreshInterval = null;
+        let containersData = [];
+        
         function initTheme() {
-            const saved = localStorage.getItem('theme');
-            if (saved) {
-                document.documentElement.setAttribute('data-theme', saved);
-                updateThemeIcon(saved);
+            // Check for manual preference first
+            const manualPref = localStorage.getItem('theme-manual');
+            if (manualPref) {
+                document.documentElement.setAttribute('data-theme', manualPref);
+                updateThemeIcon(manualPref);
+                return;
             }
+
+            // Auto dark mode: 19:00 (7 PM) - 07:00 (7 AM)
+            const hour = new Date().getHours();
+            const autoTheme = (hour >= 19 || hour < 7) ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', autoTheme);
+            updateThemeIcon(autoTheme);
         }
         
         function toggleTheme() {
             const current = document.documentElement.getAttribute('data-theme');
-            const newTheme = current === 'light' ? 'dark' : 'light';
+            const newTheme = current === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
+            // Save as manual preference (overrides auto schedule)
+            localStorage.setItem('theme-manual', newTheme);
             updateThemeIcon(newTheme);
         }
         
         function updateThemeIcon(theme) {
-            document.querySelector('.theme-toggle').textContent = theme === 'light' ? '☀️' : '🌙';
+            document.querySelector('.theme-toggle').textContent = theme === 'dark' ? '☀️' : '🌙';
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        function showLoading() {
+            const overlay = document.createElement('div');
+            overlay.className = 'loading-overlay';
+            overlay.id = 'loading-overlay';
+            overlay.innerHTML = '<div class="spinner"></div>';
+            document.body.appendChild(overlay);
+        }
+        
+        function hideLoading() {
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) overlay.remove();
         }
         
         initTheme();
         
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
-                .then(reg => console.log('SW registered'))
-                .catch(err => console.log('SW registration failed:', err));
-        }
-        
         async function loadStats() {
             try {
-                const res = await fetch('/api/stats');
+                const res = await fetch('/api/stats', {credentials: 'same-origin'});
                 const data = await res.json();
                 document.getElementById('cpu-stat').textContent = data.cpu + '%';
                 document.getElementById('ram-stat').textContent = data.ram + '%';
@@ -362,36 +780,176 @@
         
         async function loadContainers() {
             try {
-                const res = await fetch('/api/containers');
-                const containers = await res.json();
-                
-                const select = document.getElementById('container-select');
-                select.innerHTML = '<option value="">Selecteer container...</option>';
-                containers.forEach(c => {
-                    select.innerHTML += '<option value="' + c.name + '">' + c.name + '</option>';
-                });
-                
-                const tbody = document.getElementById('containers-table');
-                tbody.innerHTML = '';
-                
-                for (const c of containers) {
-                    const statusClass = c.running ? 'status-running' : 'status-stopped';
-                    const statusIcon = c.running ? '🟢' : '🔴';
-                    
-                    let cpu = '--', mem = '--';
-                    try {
-                        const statsRes = await fetch('/api/container/' + c.name + '/stats');
-                        const stats = await statsRes.json();
-                        cpu = stats.cpu;
-                        mem = stats.memory;
-                    } catch (e) {}
-                    
-                    tbody.innerHTML += '<tr onclick="viewLogs(\'' + c.name + '\')"><td><span class="' + statusClass + '">' + statusIcon + '</span></td><td>' + c.name + '</td><td>' + c.image + '</td><td>' + cpu + '</td><td>' + mem + '</td></tr>';
-                }
-                
-                document.getElementById('last-update').textContent = 'Last update: ' + new Date().toLocaleTimeString('nl-NL');
+                const res = await fetch('/api/containers', {credentials: 'same-origin'});
+                containersData = await res.json();
+                renderContainers();
+                updateContainerSelect();
+                document.getElementById('last-update').textContent = new Date().toLocaleTimeString('nl-NL');
             } catch (e) {
                 console.error('Error loading containers:', e);
+            }
+        }
+        
+        function filterContainers() {
+            renderContainers();
+        }
+        
+        function renderContainers() {
+            const search = document.getElementById('search-input').value.toLowerCase();
+            const filtered = containersData.filter(c => 
+                c.name.toLowerCase().includes(search) || 
+                c.image.toLowerCase().includes(search)
+            );
+            
+            const listContainer = document.getElementById('containers-list');
+            const tbody = document.getElementById('containers-table');
+            listContainer.innerHTML = '';
+            tbody.innerHTML = '';
+            
+            for (const c of filtered) {
+                const statusClass = c.running ? 'status-running' : 'status-stopped';
+                const statusIcon = c.running ? '🟢' : '🔴';
+                const startStopBtn = c.running 
+                    ? `<button class="btn btn-danger" onclick="event.stopPropagation();containerAction('${c.name}','stop')">Stop</button>`
+                    : `<button class="btn btn-success" onclick="event.stopPropagation();containerAction('${c.name}','start')">Start</button>`;
+                
+                let cpu = '--', mem = '--', net = '--';
+                
+                // Mobile card
+                listContainer.innerHTML += `
+                    <div class="container-item">
+                        <div class="row-top">
+                            <span class="name" onclick="showDetails('${c.name}')">${c.name}</span>
+                            <span class="status-icon ${statusClass}">${statusIcon}</span>
+                        </div>
+                        <div class="row-middle">
+                            <span class="image">${c.image}</span>
+                            <span class="stats">CPU: ${cpu} | MEM: ${mem}</span>
+                        </div>
+                        <div class="row-bottom">
+                            <div class="actions">
+                                ${startStopBtn}
+                                <button class="btn btn-warning" onclick="event.stopPropagation();containerAction('${c.name}','restart')">Restart</button>
+                                <button class="btn btn-primary" onclick="event.stopPropagation();viewLogs('${c.name}')">Logs</button>
+                            </div>
+                        </div>
+                    </div>`;
+                
+                // Desktop row
+                tbody.innerHTML += `<tr onclick="showDetails('${c.name}')" data-container="${c.name}">
+                    <td><span class="${statusClass}">${statusIcon}</span></td>
+                    <td>${c.name}</td>
+                    <td>${c.image}</td>
+                    <td class="cpu-cell">--</td>
+                    <td class="mem-cell">--</td>
+                    <td class="net-cell">--</td>
+                    <td class="actions-col">
+                        ${startStopBtn}
+                        <button class="btn btn-warning" onclick="event.stopPropagation();containerAction('${c.name}','restart')">🔄</button>
+                        <button class="btn btn-primary" onclick="event.stopPropagation();viewLogs('${c.name}')" title="Logs">📝</button>
+                    </td>
+                </tr>`;
+            }
+            
+            // Load stats for each container
+            for (const c of filtered) {
+                loadContainerStats(c.name);
+            }
+        }
+        
+        async function loadContainerStats(name) {
+            try {
+                const res = await fetch('/api/container/' + name + '/stats', {credentials: 'same-origin'});
+                const stats = await res.json();
+                
+                // Update mobile card
+                const mobileCards = document.querySelectorAll('.container-item');
+                mobileCards.forEach(card => {
+                    if (card.querySelector('.name').textContent === name) {
+                        card.querySelector('.stats').textContent = `CPU: ${stats.cpu} | MEM: ${stats.memory}`;
+                    }
+                });
+                
+                // Update desktop table
+                const row = document.querySelector(`tr[data-container="${name}"]`);
+                if (row) {
+                    row.querySelector('.cpu-cell').textContent = stats.cpu;
+                    row.querySelector('.mem-cell').textContent = stats.memory;
+                    row.querySelector('.net-cell').textContent = stats.network;
+                }
+            } catch (e) {}
+        }
+        
+        function updateContainerSelect() {
+            const select = document.getElementById('container-select');
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">Selecteer container...</option>';
+            containersData.forEach(c => {
+                select.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+            });
+            if (currentValue) select.value = currentValue;
+        }
+        
+        async function containerAction(name, action) {
+            try {
+                const res = await fetch(`/api/container/${name}/${action}`, {
+                    method: 'POST',
+                    credentials: 'same-origin'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    setTimeout(() => loadContainers(), 1000);
+                } else {
+                    showToast(data.error || 'Actie mislukt', 'error');
+                }
+            } catch (e) {
+                showToast('Fout bij uitvoeren actie', 'error');
+            }
+        }
+        
+        async function showDetails(name) {
+            const modal = new bootstrap.Modal(document.getElementById('detailModal'));
+            document.getElementById('modal-title').textContent = `Container: ${name}`;
+            document.getElementById('modal-body').innerHTML = '<div class="spinner mx-auto"></div>';
+            modal.show();
+            
+            try {
+                const res = await fetch(`/api/container/${name}/details`, {credentials: 'same-origin'});
+                const data = await res.json();
+                
+                document.getElementById('modal-body').innerHTML = `
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label>ID</label>
+                            <span>${data.id}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Image</label>
+                            <span>${data.image}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Status</label>
+                            <span class="${data.running ? 'status-running' : 'status-stopped'}">${data.status}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>IP Address</label>
+                            <span>${data.ip}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Created</label>
+                            <span>${data.created}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Networks</label>
+                            <span>${data.networks.join(', ') || 'none'}</span>
+                        </div>
+                    </div>
+                    ${data.ports.length ? `<div class="detail-item mt-3"><label>Ports</label><div class="detail-list">${data.ports.join('<br>')}</div></div>` : ''}
+                    ${data.volumes.length ? `<div class="detail-item mt-3"><label>Volumes</label><div class="detail-list">${data.volumes.join('<br>')}</div></div>` : ''}
+                    ${data.env.length ? `<div class="detail-item mt-3"><label>Environment</label><div class="detail-list">${data.env.join('<br>')}</div></div>` : ''}`;
+            } catch (e) {
+                document.getElementById('modal-body').innerHTML = '<div class="alert alert-danger">Fout bij laden details</div>';
             }
         }
         
@@ -404,17 +962,31 @@
         async function loadLogs() {
             const container = document.getElementById('container-select').value;
             if (!container) {
-                alert('Selecteer eerst een container');
+                showToast('Selecteer eerst een container', 'warning');
                 return;
             }
             
+            const lines = document.getElementById('log-lines').value;
+            const search = document.getElementById('log-search').value;
             const logsOutput = document.getElementById('logs-output');
             logsOutput.textContent = 'Laden...';
             
             try {
-                const res = await fetch('/api/container/' + container + '/logs?lines=200');
+                let url = `/api/container/${container}/logs?lines=${lines}`;
+                if (search) url += `&search=${encodeURIComponent(search)}`;
+                
+                const res = await fetch(url, {credentials: 'same-origin'});
                 const data = await res.json();
-                logsOutput.textContent = data.logs || 'Geen logs beschikbaar';
+                
+                // Highlight search term
+                let logs = data.logs || 'Geen logs beschikbaar';
+                if (search) {
+                    const regex = new RegExp(`(${search})`, 'gi');
+                    logs = logs.replace(regex, '<mark style="background:var(--warning)">$1</mark>');
+                }
+                
+                logsOutput.innerHTML = logs;
+                document.getElementById('log-timestamp').textContent = `Laatste update: ${new Date().toLocaleTimeString('nl-NL')} | ${data.lines_shown || 0} regels`;
                 
                 if (document.getElementById('auto-scroll').checked) {
                     logsOutput.scrollTop = logsOutput.scrollHeight;
@@ -424,13 +996,103 @@
             }
         }
         
+        function exportLogs() {
+            const container = document.getElementById('container-select').value;
+            if (!container) {
+                showToast('Selecteer eerst een container', 'warning');
+                return;
+            }
+            
+            const lines = document.getElementById('log-lines').value;
+            window.location.href = `/api/container/${container}/logs/export?lines=${lines}`;
+        }
+        
+        async function loadImages() {
+            try {
+                const res = await fetch('/api/images', {credentials: 'same-origin'});
+                const images = await res.json();
+                
+                const list = document.getElementById('images-list');
+                list.innerHTML = '';
+                
+                images.forEach(img => {
+                    list.innerHTML += `
+                        <div class="image-item">
+                            <div>
+                                <div class="image-name">${img.name}</div>
+                                <div class="image-meta">ID: ${img.id} | ${img.size}</div>
+                            </div>
+                            <span class="image-meta">${img.created}</span>
+                        </div>`;
+                });
+            } catch (e) {
+                console.error('Error loading images:', e);
+            }
+        }
+        
+        async function pruneImages() {
+            if (!confirm('Alle ongebruikte images verwijderen?')) return;
+            
+            try {
+                const res = await fetch('/api/prune/images', {
+                    method: 'POST',
+                    credentials: 'same-origin'
+                });
+                const data = await res.json();
+                showToast(data.message || 'Prune voltooid', 'success');
+                loadImages();
+            } catch (e) {
+                showToast('Fout bij prune', 'error');
+            }
+        }
+        
+        async function loadSystemInfo() {
+            try {
+                const res = await fetch('/api/system', {credentials: 'same-origin'});
+                const data = await res.json();
+                document.getElementById('system-info').textContent = data.df;
+            } catch (e) {
+                document.getElementById('system-info').textContent = 'Fout bij laden systeem info';
+            }
+        }
+        
+        function toggleAutoRefresh() {
+            const enabled = document.getElementById('auto-refresh').checked;
+            if (enabled) {
+                autoRefreshInterval = setInterval(() => {
+                    loadStats();
+                    loadContainers();
+                }, 10000);
+            } else {
+                clearInterval(autoRefreshInterval);
+            }
+        }
+        
+        // Tab change handlers
+        document.getElementById('logs-tab').addEventListener('shown.bs.tab', updateContainerSelect);
+        document.getElementById('images-tab').addEventListener('shown.bs.tab', loadImages);
+        document.getElementById('system-tab').addEventListener('shown.bs.tab', loadSystemInfo);
+        
+        // Initial load
         loadStats();
         loadContainers();
+        toggleAutoRefresh();
         
-        setInterval(function() {
-            loadStats();
-            loadContainers();
-        }, 10000);
+        // Request notification permission
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+        
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('SW registered'))
+                .catch(err => console.log('SW registration failed:', err));
+        }
     </script>
+
+    <footer class="footer">
+        Developed by JPHsystems &copy; 2026
+    </footer>
 </body>
 </html>
