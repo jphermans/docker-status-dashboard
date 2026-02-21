@@ -8,6 +8,10 @@ secrets.env
 # 2FA Configuration (contains secrets!)
 2fa_config.json
 
+# Password storage (contains secrets!)
+password.json
+data/password.json
+
 # Python
 __pycache__/
 *.py[cod]
