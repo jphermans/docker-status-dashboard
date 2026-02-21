@@ -64,6 +64,20 @@ login_manager.session_protection = "strong"
 # 2FA Configuration File
 TWO_FA_FILE = os.path.join(os.path.dirname(__file__), "data", "2fa_config.json")
 
+# Password Configuration File
+PASSWORD_FILE = os.path.join(os.path.dirname(__file__), 'data', 'password.json')
+
+def get_stored_password():
+    """Get stored password from file or environment"""
+    if os.path.exists(PASSWORD_FILE):
+        try:
+            with open(PASSWORD_FILE, 'r') as f:
+                data = json.load(f)
+                return data.get('password', os.getenv('AUTH_PASSWORD'))
+        except:
+            return os.getenv('AUTH_PASSWORD')
+    return os.getenv('AUTH_PASSWORD')
+
 def load_2fa_config():
     """Load 2FA configuration from JSON file"""
     if os.path.exists(TWO_FA_FILE):
@@ -516,18 +530,6 @@ if __name__ == '__main__':
 def change_password():
     """Change user password - stores in data directory for persistence"""
     username = current_user.id
-    PASSWORD_FILE = os.path.join(os.path.dirname(__file__), 'data', 'password.json')
-    
-    def get_stored_password():
-        """Get stored password from file or environment"""
-        if os.path.exists(PASSWORD_FILE):
-            try:
-                with open(PASSWORD_FILE, 'r') as f:
-                    data = json.load(f)
-                    return data.get('password', os.getenv('AUTH_PASSWORD'))
-            except:
-                return os.getenv('AUTH_PASSWORD')
-        return os.getenv('AUTH_PASSWORD')
     
     def save_password(password):
         """Save new password to file"""
