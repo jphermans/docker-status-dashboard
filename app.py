@@ -62,7 +62,7 @@ login_manager.login_view = 'login'
 login_manager.session_protection = "strong"
 
 # 2FA Configuration File
-TWO_FA_FILE = os.path.join(os.path.dirname(__file__), '2fa_config.json')
+TWO_FA_FILE = os.path.join(os.path.dirname(__file__), "data", "2fa_config.json")
 
 def load_2fa_config():
     """Load 2FA configuration from JSON file"""
